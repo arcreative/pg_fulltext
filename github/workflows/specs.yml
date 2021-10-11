@@ -1,0 +1,41 @@
+name: Specs
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install additional dependencies
+      run: |
+        sudo apt update && sudo apt install postgresql-client -y
+    - name: Set up Ruby 2.7
+      uses: actions/setup-ruby@v1
+      with:
+        ruby-version: 2.7.x
+
+    - name: Setup PostgreSQL
+      uses: Harmon758/postgresql-action@v1
+      with:
+        postgresql version: 13
+        postgresql db: pg_fulltext_test
+        postgresql user: test_user
+        postgresql password: test_password
+
+    - name: Bundle Install
+      run: |
+        gem install bundler
+        bundle config path vendor/bundle
+        bundle install --jobs 4 --retry 3
+    - name: Test with Rake
+      run: |
+        bundle exec rake spec
+      env:
+        DATABASE_URL: postgres://test_user:test_password@localhost:5432/pg_fulltext_test
