@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.email       = 'adam@arcreative.net'
   s.files       = %w[
     lib/pg_fulltext.rb
-    lib/pg_fulltext/model.rb
+    lib/pg_fulltext/active_record.rb
     lib/pg_fulltext/query.rb
   ]
   s.homepage    =
