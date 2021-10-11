@@ -57,10 +57,13 @@ string for you to use as you wish.
 Something this should do the trick:
 
 ```ruby
+db = PG.connect(dbname: 'mydb')
 search_string = 'foo bar "include this phrase" !butnotthis !"and and also not this"'
-sql_query = <<~SQL
+tsv_query = db.escape_string(PgFulltext::Query.to_tsquery_string(search_string))
+sql = <<~SQL
   SELECT *
   FROM my_model
-  WHERE tsv @@ to_tsvector('portuguese', #{PgFulltext::Query.to_tsquery_string(query)})
+  WHERE tsv @@ to_tsquery('portuguese', '#{tsv_query}')
 SQL
+db.exec(sql)
 ```
