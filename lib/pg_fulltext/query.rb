@@ -27,7 +27,7 @@ module PgFulltext
           elsif phrase_terms.length > 0
             if term.end_with?('"')
               phrase_terms << format_term(term[0..-2], prefix: prefix)
-              terms << "#{'!' if negate_phrase}(#{reject_falsy(phrase_terms, prefix: prefix).join(' <-> ')})"
+              terms << "#{'!' if negate_phrase}(#{reject_falsy(phrase_terms).join(' <-> ')})"
               phrase_terms = []
               negate_phrase = false
             else
@@ -39,7 +39,7 @@ module PgFulltext
         end
       else
         query.gsub! /["]/, ''
-        terms = reject_falsy(query.split(' ').map { |v| format_term(v, prefix: prefix) }, prefix: prefix)
+        terms = reject_falsy(query.split(' ').map { |v| format_term(v, prefix: prefix) })
       end
 
       # Join terms with operator
@@ -66,7 +66,7 @@ module PgFulltext
       "#{term}#{':*' if prefix}"
     end
 
-    def self.reject_falsy(terms, prefix: true)
+    def self.reject_falsy(terms)
       false_values = [nil, '', '"', '!', ':*', '":*', '!:*']
       terms.reject { |v| false_values.include?(v) }
     end
