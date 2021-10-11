@@ -2,10 +2,8 @@ module PgFulltext
   module Query
     def self.to_tsquery_string(query, prefix: true, operator: '&')
 
-      # Parse out all [unicode] non-word and non-quote characters
-      query.gsub!(/[^\s\p{L}"!]/, '')
-      query.gsub!(/"+/, '"')
-      query.gsub!(/\s+/, ' ')
+      # Normalize search string to a more parseable equivalent
+      query = normalize_query(query)
 
       # Collect terms
       terms = []
@@ -49,6 +47,16 @@ module PgFulltext
     end
 
     private
+
+    def self.normalize_query(query)
+      query
+        .gsub(/[.,]/, ' ')        # Replace all periods and commas with spaces (reasonable delimiters)
+        .gsub(/[^\s\p{L}"!]/, '') # Remove all non-unicode, quote ("), and bangs (!)
+        .gsub(/"+/, '"')          # Replace Repeat quotes with single double-quote
+        .gsub(/!+/, '!')          # Replace Repeat bangs with single bang
+        .gsub(/\s+/, ' ')         # Replace repeat whitespace occurrences with single spaces
+        .strip                    # Strip space from beginning and end of line
+    end
 
     def self.format_term(term, prefix: true)
       # Remove any ! that's not at the beginning of the term, as it will break the query
