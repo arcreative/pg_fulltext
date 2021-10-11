@@ -19,11 +19,15 @@ module PgFulltext
           # Skip if completely comprised of non-unicode word characters
           next if term.gsub(/[^\s\p{L}]/, '') == ''
 
-          if term.start_with?('!"') && !term.end_with?('"')
-            phrase_terms << format_term(term[2..-1], prefix: true)
+          if term.start_with?('!"') && term.end_with?('"')
+            terms << format_term("!#{term[2..-2]}", prefix: prefix)
+          elsif term.start_with?('"') && term.end_with?('"')
+            terms << format_term(term[1..-2], prefix: prefix)
+          elsif term.start_with?('!"') && !term.end_with?('"')
+            phrase_terms << format_term(term[2..-1], prefix: prefix)
             negate_phrase = true
           elsif term.start_with?('"') && !term.end_with?('"')
-            phrase_terms << format_term(term[1..-1], prefix: true)
+            phrase_terms << format_term(term[1..-1], prefix: prefix)
           elsif phrase_terms.length > 0
             if term.end_with?('"')
               phrase_terms << format_term(term[0..-2], prefix: prefix)
