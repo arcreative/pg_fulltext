@@ -11,7 +11,7 @@ module PgFulltext
       rule(/!"[\p{L}\s!]+"/) { |v| [:NOT_PHRASE, v[2..-2]] }
 
       rule(/\s+/)
-      rule(/[^\p{L}^\s^"]+/)
+      rule(/[^\p{L}\s"]+/)
     end
 
     def self.to_tsquery_string(query, prefix: true, operator: '&')
