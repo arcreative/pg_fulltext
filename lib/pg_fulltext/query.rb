@@ -2,10 +2,8 @@ module PgFulltext
   module Query
     def self.to_tsquery_string(query, prefix: true, operator: '&')
 
-      # Parse out all [unicode] non-word and non-quote characters
-      query.gsub!(/[^\s\p{L}"!]/, '')
-      query.gsub!(/"+/, '"')
-      query.gsub!(/\s+/, ' ')
+      # Normalize search string to a more parseable equivalent
+      query = normalize_query(query)
 
       # Collect terms
       terms = []
@@ -21,15 +19,19 @@ module PgFulltext
           # Skip if completely comprised of non-unicode word characters
           next if term.gsub(/[^\s\p{L}]/, '') == ''
 
-          if term.start_with?('!"') && !term.end_with?('"')
-            phrase_terms << format_term(term[2..-1], prefix: true)
+          if term.start_with?('!"') && term.end_with?('"')
+            terms << format_term("!#{term[2..-2]}", prefix: prefix)
+          elsif term.start_with?('"') && term.end_with?('"')
+            terms << format_term(term[1..-2], prefix: prefix)
+          elsif term.start_with?('!"') && !term.end_with?('"')
+            phrase_terms << format_term(term[2..-1], prefix: prefix)
             negate_phrase = true
           elsif term.start_with?('"') && !term.end_with?('"')
-            phrase_terms << format_term(term[1..-1], prefix: true)
+            phrase_terms << format_term(term[1..-1], prefix: prefix)
           elsif phrase_terms.length > 0
             if term.end_with?('"')
               phrase_terms << format_term(term[0..-2], prefix: prefix)
-              terms << "#{'!' if negate_phrase}(#{reject_falsy(phrase_terms, prefix: prefix).join(' <-> ')})"
+              terms << "#{'!' if negate_phrase}(#{reject_falsy(phrase_terms).join(' <-> ')})"
               phrase_terms = []
               negate_phrase = false
             else
@@ -41,7 +43,7 @@ module PgFulltext
         end
       else
         query.gsub! /["]/, ''
-        terms = reject_falsy(query.split(' ').map { |v| format_term(v, prefix: prefix) }, prefix: prefix)
+        terms = reject_falsy(query.split(' ').map { |v| format_term(v, prefix: prefix) })
       end
 
       # Join terms with operator
@@ -49,6 +51,16 @@ module PgFulltext
     end
 
     private
+
+    def self.normalize_query(query)
+      query
+        .gsub(/[.,]/, ' ')        # Replace all periods and commas with spaces (reasonable delimiters)
+        .gsub(/[^\s\p{L}"!]/, '') # Remove all non-unicode, quote ("), and bangs (!)
+        .gsub(/"+/, '"')          # Replace Repeat quotes with single double-quote
+        .gsub(/!+/, '!')          # Replace Repeat bangs with single bang
+        .gsub(/\s+/, ' ')         # Replace repeat whitespace occurrences with single spaces
+        .strip                    # Strip space from beginning and end of line
+    end
 
     def self.format_term(term, prefix: true)
       # Remove any ! that's not at the beginning of the term, as it will break the query
@@ -58,7 +70,7 @@ module PgFulltext
       "#{term}#{':*' if prefix}"
     end
 
-    def self.reject_falsy(terms, prefix: true)
+    def self.reject_falsy(terms)
       false_values = [nil, '', '"', '!', ':*', '":*', '!:*']
       terms.reject { |v| false_values.include?(v) }
     end

@@ -1,16 +1,22 @@
-Gem::Specification.new do |s|
-  s.name        = 'pg_fulltext'
-  s.version     = '0.1.0'
-  s.summary     = 'PostgreSQL fulltext search'
-  s.description = 'Allows simple searching with a variety of options'
-  s.authors     = ['Adam Robertson']
-  s.email       = 'adam@arcreative.net'
-  s.files       = %w[
-    lib/pg_fulltext.rb
-    lib/pg_fulltext/active_record.rb
-    lib/pg_fulltext/query.rb
-  ]
-  s.homepage    =
-    'https://github.com/arcreative/pg_fulltext'
-  s.license     = 'MIT'
+Gem::Specification.new do |spec|
+  spec.name        = 'pg_fulltext'
+  spec.version     = '0.1.0'
+  spec.summary     = 'PostgreSQL fulltext search'
+  spec.description = 'Allows simple searching with a variety of options'
+  spec.authors     = ['Adam Robertson']
+  spec.email       = 'adam@arcreative.net'
+
+  spec.files = Dir['{lib}/**/*', 'Rakefile', 'README.md']
+
+  spec.homepage    = 'https://github.com/arcreative/pg_fulltext'
+  spec.license     = 'MIT'
+
+  spec.metadata['homepage_uri'] = spec.homepage
+  spec.metadata['source_code_uri'] = 'https://github.com/arcreative/pg_fulltext'
+
+  spec.add_dependency 'activerecord', '>= 5.0'
+  spec.add_dependency 'activesupport', '>= 5.0'
+
+  spec.add_development_dependency 'rspec'
+  spec.add_development_dependency 'with_model'
 end

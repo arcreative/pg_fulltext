@@ -19,15 +19,15 @@ module PgFulltext
         relation,
         query,
         tsvector_column: :tsv,
-        search_type: :simple,
+        search_type: nil,
         order: true,
+        prefix: true,
         reorder: false,
         any_word: false,
         ignore_accents: false
       )
         serial = SecureRandom.hex(4)
-        table_quoted = connection.quote_table_name(table_name)
-        pk_quoted = "#{table_quoted}.#{connection.quote_column_name(primary_key)}"
+        pk_quoted = "#{quoted_table_name}.#{connection.quote_column_name(primary_key)}"
         fulltext_join_name = "pg_fulltext_#{serial}"
 
         # Build the search relation to join on
@@ -37,6 +37,7 @@ module PgFulltext
           tsvector_column: tsvector_column,
           search_type: search_type,
           any_word: any_word,
+          prefix: prefix,
           ignore_accents: ignore_accents,
         )
 
@@ -58,13 +59,13 @@ module PgFulltext
         tsvector_column: :tsv,
         search_type: nil,
         any_word: false,
+        prefix: true,
         ignore_accents: false
       )
-        tsquery_string_quoted = connection.quote(PgFulltext::Query.to_tsquery_string(query, operator: any_word ? '|' : '&'))
+        tsquery_string_quoted = connection.quote(PgFulltext::Query.to_tsquery_string(query, operator: any_word ? '|' : '&', prefix: prefix))
         tsquery_string_quoted = "unaccent(#{tsquery_string_quoted})" if ignore_accents
-        table_quoted = connection.quote_table_name(table_name)
         column_quoted = connection.quote_column_name(tsvector_column)
-        fqc_quoted = "#{table_quoted}.#{column_quoted}"
+        fqc_quoted = "#{quoted_table_name}.#{column_quoted}"
         tsquery = "to_tsquery(#{"#{connection.quote search_type}, " if search_type.present?}#{tsquery_string_quoted})"
 
         relation
