@@ -16,6 +16,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'activerecord', '>= 5.0'
   spec.add_dependency 'activesupport', '>= 5.0'
+  spec.add_dependency 'rltk', '>= 3.0.1'
 
   spec.add_development_dependency 'rspec'
   spec.add_development_dependency 'with_model'

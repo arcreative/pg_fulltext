@@ -49,7 +49,7 @@ describe PgFulltext::Query do
 
     describe 'phrases' do
       it 'handles phrase syntax with single term' do
-        expect(described_class.to_tsquery_string('foo "bar"')).to eq('foo:* & bar:*')
+        expect(described_class.to_tsquery_string('foo "bar"')).to eq('foo:* & (bar:*)')
       end
 
       it 'handles phrase syntax with two terms' do
@@ -107,11 +107,6 @@ describe PgFulltext::Query do
     it 'trims other whitespace from beginning and end of string, and repeat whitespaces within' do
       query = "\t\t\n\none\t\n     two\n\n\t\t\n"
       expect(described_class.normalize_query(query)).to eq('one two')
-    end
-
-    it 'replaces repeat occurrences of double quotes with single quotes' do
-      query = 'foo """"""bar baz""'
-      expect(described_class.normalize_query(query)).to eq('foo "bar baz"')
     end
   end
 
