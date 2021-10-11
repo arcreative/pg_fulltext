@@ -15,26 +15,6 @@ module PgFulltext
         }
       end
 
-      def get_search_relation(
-        relation,
-        query,
-        tsvector_column: :tsv,
-        search_type: nil,
-        any_word: false,
-        ignore_accents: false
-      )
-        tsquery_string_quoted = connection.quote(PgFulltext::Query.to_tsquery_string(query, operator: any_word ? '|' : '&'))
-        tsquery_string_quoted = "unaccent(#{tsquery_string_quoted})" if ignore_accents
-        table_quoted = connection.quote_table_name(table_name)
-        column_quoted = connection.quote_column_name(tsvector_column)
-        fqc_quoted = "#{table_quoted}.#{column_quoted}"
-        tsquery = "to_tsquery(#{"#{connection.quote search_type}, " if search_type.present?}#{tsquery_string_quoted})"
-
-        relation
-          .select(:id, "ts_rank_cd(#{fqc_quoted}, #{tsquery}) AS rank")
-          .where("#{fqc_quoted} @@ #{tsquery}")
-      end
-
       def apply_search_to_relation(
         relation,
         query,
@@ -70,6 +50,26 @@ module PgFulltext
 
         # Return the model relation
         relation
+      end
+
+      def get_search_relation(
+        relation,
+        query,
+        tsvector_column: :tsv,
+        search_type: nil,
+        any_word: false,
+        ignore_accents: false
+      )
+        tsquery_string_quoted = connection.quote(PgFulltext::Query.to_tsquery_string(query, operator: any_word ? '|' : '&'))
+        tsquery_string_quoted = "unaccent(#{tsquery_string_quoted})" if ignore_accents
+        table_quoted = connection.quote_table_name(table_name)
+        column_quoted = connection.quote_column_name(tsvector_column)
+        fqc_quoted = "#{table_quoted}.#{column_quoted}"
+        tsquery = "to_tsquery(#{"#{connection.quote search_type}, " if search_type.present?}#{tsquery_string_quoted})"
+
+        relation
+          .select(:id, "ts_rank_cd(#{fqc_quoted}, #{tsquery}) AS rank")
+          .where("#{fqc_quoted} @@ #{tsquery}")
       end
     end
   end
