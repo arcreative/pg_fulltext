@@ -39,15 +39,15 @@ MyModel.search('foo bar "include this phrase" !butnotthis !"and and also not thi
 The defaults for this include support for negation, phrases, phrase negation, and prefix searches, but those can be 
 configured per the following options:
 
-| Option            | Default | Description |
-| ----------------  | :------ | :----------- |
-| `tsvector_column` | `tsv`   | If you have a different column containing your tsvector, specify it here. |
-| `search_type`     | `nil`   | Your PostgreSQL probably defaults to `'english'`, but set this to match the tsvector you've generated. |
-| `order`           | `true`  | Whether or not the `order` method should be applied against the generated `rank` for the fulltext query. If you just care about returning matches and not their respective rank, set this to `false`. |
-| `prefix`          | `true`  | Default search will match partial words as well as whole words. Set this to `false` if only whole words should be matched. |
-| `reorder`         | `false` | If you already have `order` set on this relation, it will take precedence over the fulltext `rank`. `reorder` will call clear, effectively clearing the existing order and applying `rank`. |
-| `any_word`        | `false` | Default search uses the `&` operator, ensuring that all terms are matched in the query.  If you want to match _any_ term in the query, set this to `true`. |
-| `ignore_accents`  | `false` | By default, search queries with accents will be sent through as-is. Setting this to `true` will `unaccent()` the query, which helps match `tsv` columns that have also been unaccented.  Alternatively, you can have your `tsv` column be a combination of both, and this option will be unnecesary. Requires the `unaccent` Postgres extension. |
+| Option            | Default  | Description |
+| ----------------  | :------- | :----------- |
+| `tsvector_column` | `tsv`    | If you have a different column containing your tsvector, specify it here. |
+| `search_type`     | `simple` | Your PostgreSQL probably defaults to `'english'`, but the default for this option is `simple` to ensure the most predictable behavior. IMPORTANT: Set this to match the tsvector you've generated. |
+| `order`           | `true`   | Whether or not the `order` method should be applied against the generated `rank` for the fulltext query. If you just care about returning matches and not their respective rank, set this to `false`. |
+| `prefix`          | `true`   | Default search will match partial words as well as whole words. Set this to `false` if only whole words should be matched. |
+| `reorder`         | `false`  | If you already have `order` set on this relation, it will take precedence over the fulltext `rank`. `reorder` will call clear, effectively clearing the existing order and applying `rank`. |
+| `any_word`        | `false`  | Default search uses the `&` operator, ensuring that all terms are matched in the query.  If you want to match _any_ term in the query, set this to `true`. |
+| `ignore_accents`  | `false`  | By default, search queries with accents will be sent through as-is. Setting this to `true` will `unaccent()` the query, which helps match `tsv` columns that have also been unaccented.  Alternatively, you can have your `tsv` column be a combination of both, and this option will be unnecesary. Requires the `unaccent` Postgres extension. |
 
 ## Standalone Configuration
 

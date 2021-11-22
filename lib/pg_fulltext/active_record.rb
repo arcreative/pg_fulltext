@@ -19,7 +19,7 @@ module PgFulltext
         relation,
         query,
         tsvector_column: :tsv,
-        search_type: nil,
+        search_type: :simple,
         order: true,
         prefix: true,
         reorder: false,
