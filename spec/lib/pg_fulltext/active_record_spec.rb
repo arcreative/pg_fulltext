@@ -40,6 +40,7 @@ describe PgFulltext::ActiveRecord do
     let!(:jim) { User.create(first_name: 'Jim', last_name: 'Jones') }
     let!(:john) { User.create(first_name: 'John', last_name: 'Jones') }
     let!(:billy_bob) { User.create(first_name: 'Billy Bob', last_name: 'Jeffers') }
+    let!(:numbers_person) { User.create(first_name: '12345', last_name: '54321') }
 
     before do
       User.connection.execute <<~SQL.squish
@@ -65,37 +66,49 @@ describe PgFulltext::ActiveRecord do
       it 'simple first name query returns expected users' do
         results = User.search('Jim')
         expect(results).to include(jim)
-        expect(results).not_to include(john, billy_bob)
+        expect(results).not_to include(john, billy_bob, numbers_person)
       end
 
       it 'simple last name query returns expected users' do
         results = User.search('Jones')
         expect(results).to include(jim, john)
-        expect(results).not_to include(billy_bob)
+        expect(results).not_to include(billy_bob, numbers_person)
+      end
+
+      it 'simple number name query returns expected users' do
+        results = User.search('12345')
+        expect(results).to include(numbers_person)
+        expect(results).not_to include(jim, john, billy_bob)
+      end
+
+      it 'simple number name query (partial) returns expected users' do
+        results = User.search('123')
+        expect(results).to include(numbers_person)
+        expect(results).not_to include(jim, john, billy_bob)
       end
 
       it 'negation on last name query returns expected users' do
         results = User.search('!Jones')
-        expect(results).to include(billy_bob)
+        expect(results).to include(billy_bob, numbers_person)
         expect(results).not_to include(jim, john)
       end
 
       it 'phrase search returns expected users' do
         results = User.search('"Billy Bob"')
         expect(results).to include(billy_bob)
-        expect(results).not_to include(jim, john)
+        expect(results).not_to include(jim, john, numbers_person)
       end
 
       it 'negated phrase search with reversed terms returns no users' do
         results = User.search('!"Billy Bob"')
-        expect(results).to include(jim, john)
+        expect(results).to include(jim, john, numbers_person)
         expect(results).not_to include(billy_bob)
       end
 
       it 'phrase search with reversed terms returns no users' do
         results = User.search('"Bob Billy"')
         expect(results.to_a).to eq([])
-        expect(results).not_to include(jim, john, billy_bob)
+        expect(results).not_to include(jim, john, billy_bob, numbers_person)
       end
     end
 
@@ -129,6 +142,11 @@ describe PgFulltext::ActiveRecord do
         results = User.search('Jon')
         expect(results).to include(jim, john)
       end
+
+      it 'returns results matching partial numbers' do
+        results = User.search('123')
+        expect(results).to include(numbers_person)
+      end
     end
 
     context 'without prefix' do
@@ -136,6 +154,11 @@ describe PgFulltext::ActiveRecord do
 
       it 'does not return results matching partial words' do
         results = User.search('Jo')
+        expect(results.to_a).to eq([])
+      end
+
+      it 'does not return results matching partial numbers' do
+        results = User.search('123')
         expect(results.to_a).to eq([])
       end
 

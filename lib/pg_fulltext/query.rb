@@ -6,7 +6,7 @@ module PgFulltext
       rule(/!+/)
       rule(/"+/)
 
-      rule(/(!?)[\p{L}!]+/) { |v| [:WORD, v] }
+      rule(/(!?)[0-9\p{L}!]+/) { |v| [:WORD, v] }
       rule(/"[\p{L}\s!]+"/) { |v| [:PHRASE, v[1..-2]] }
       rule(/!"[\p{L}\s!]+"/) { |v| [:NOT_PHRASE, v[2..-2]] }
 
@@ -36,10 +36,10 @@ module PgFulltext
 
     def self.normalize_query(query)
       query
-        .gsub(/[.,]/, ' ')        # Replace all periods and commas with spaces (reasonable delimiters)
-        .gsub(/[^\s\p{L}"!]/, '') # Remove all non-unicode, whitespace, quotes ("), and bangs (!)
-        .gsub(/\s+/, ' ')         # Replace repeat whitespace occurrences with single spaces
-        .strip                    # Strip space from beginning and end of line
+        .gsub(/[.,]/, ' ')            # Replace all periods and commas with spaces (reasonable delimiters)
+        .gsub(/[^\s\p{L}0-9"!]/, '')  # Remove all non-unicode, whitespace, numbers, quotes ("), and bangs (!)
+        .gsub(/\s+/, ' ')             # Replace repeat whitespace occurrences with single spaces
+        .strip                        # Strip space from beginning and end of line
     end
 
     def self.format_term(term, prefix: true)
