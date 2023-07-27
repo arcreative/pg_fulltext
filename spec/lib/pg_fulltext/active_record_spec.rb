@@ -29,10 +29,9 @@ describe PgFulltext::ActiveRecord do
     # Options
     let(:scope_name) { :search }
     let(:tsvector_column) { nil }
-    let(:search_type) { nil }
+    let(:search_type) { :simple }
     let(:order) { nil }
     let(:reorder) { nil }
-    let(:any_word) { nil }
     let(:prefix) { nil }
     let(:ignore_accents) { nil }
 
@@ -45,7 +44,7 @@ describe PgFulltext::ActiveRecord do
     before do
       User.connection.execute <<~SQL.squish
         UPDATE #{User.quoted_table_name}
-        SET tsv = to_tsvector('english'::regconfig, first_name || ' ' || last_name)
+        SET tsv = to_tsvector('simple'::regconfig, first_name || ' ' || last_name)
       SQL
 
       User.add_search_scope(
@@ -55,7 +54,6 @@ describe PgFulltext::ActiveRecord do
           search_type: search_type,
           order: order,
           reorder: reorder,
-          any_word: any_word,
           prefix: prefix,
           ignore_accents: ignore_accents,
         }.compact,
@@ -88,7 +86,7 @@ describe PgFulltext::ActiveRecord do
       end
 
       it 'negation on last name query returns expected users' do
-        results = User.search('!Jones')
+        results = User.search('-Jones')
         expect(results).to include(billy_bob, numbers_person)
         expect(results).not_to include(jim, john)
       end
@@ -100,7 +98,7 @@ describe PgFulltext::ActiveRecord do
       end
 
       it 'negated phrase search with reversed terms returns no users' do
-        results = User.search('!"Billy Bob"')
+        results = User.search('-"Billy Bob"')
         expect(results).to include(jim, john, numbers_person)
         expect(results).not_to include(billy_bob)
       end
@@ -113,25 +111,11 @@ describe PgFulltext::ActiveRecord do
     end
 
     context 'with search_type' do
-      let(:search_type) { :simple }
+      let(:search_type) { :english }
 
-      it 'simple last name query does not return expected users (mismatch between simple query and english tsvector)' do
-        results = User.search('Jones')
-        expect(results).not_to include(jim, john)
-      end
-    end
-
-    context 'with any_word' do
-      let(:any_word) { true }
-
-      it 'returns any result matching any term' do
-        results = User.search('Jeffers Jones')
-        expect(results).to include(jim, john, billy_bob)
-      end
-
-      it 'returns any result matching phrase and term' do
-        results = User.search('"Billy Bob" Jones')
-        expect(results).to include(jim, john, billy_bob)
+      it 'english query of last name does return a match when it normally would not (english query lexeme matches simple tsvector)' do
+        results = User.search('Jonesing')
+        expect(results).to include(jim, john)
       end
     end
 

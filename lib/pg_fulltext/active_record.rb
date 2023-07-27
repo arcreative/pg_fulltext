@@ -23,7 +23,6 @@ module PgFulltext
         order: true,
         prefix: true,
         reorder: false,
-        any_word: false,
         ignore_accents: false
       )
         serial = SecureRandom.hex(4)
@@ -36,7 +35,6 @@ module PgFulltext
           query,
           tsvector_column: tsvector_column,
           search_type: search_type,
-          any_word: any_word,
           prefix: prefix,
           ignore_accents: ignore_accents,
         )
@@ -58,16 +56,15 @@ module PgFulltext
         query,
         tsvector_column: :tsv,
         search_type: nil,
-        any_word: false,
         prefix: true,
         ignore_accents: false
       )
-        tsquery_string_quoted = connection.quote(PgFulltext::Query.to_tsquery_string(query, operator: any_word ? '|' : '&', prefix: prefix))
+        tsquery_string_quoted = connection.quote(query)
         tsquery_string_quoted = "unaccent(#{tsquery_string_quoted})" if ignore_accents
         column_quoted = connection.quote_column_name(tsvector_column)
         fqc_quoted = "#{quoted_table_name}.#{column_quoted}"
-        tsquery = "to_tsquery(#{"#{connection.quote search_type}, " if search_type.present?}#{tsquery_string_quoted})"
-
+        tsquery = "websearch_to_tsquery(#{"#{connection.quote search_type}, " if search_type.present?}#{tsquery_string_quoted})"
+        tsquery = "regexp_replace(#{tsquery}::text, '''([a-z0-9\\-_@.]+)''', '''\\1'':*', 'g')::tsquery" if prefix
         relation
           .select(:id, "ts_rank_cd(#{fqc_quoted}, #{tsquery}) AS rank")
           .where("#{fqc_quoted} @@ #{tsquery}")
