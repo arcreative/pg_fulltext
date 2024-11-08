@@ -66,6 +66,7 @@ module PgFulltext
         tsquery = "websearch_to_tsquery(#{"#{connection.quote search_type}, " if search_type.present?}#{tsquery_string_quoted})"
         tsquery = "regexp_replace(#{tsquery}::text, '''([a-z0-9\\-_@.]+)''', '''\\1'':*', 'g')::tsquery" if prefix
         relation
+          .unscoped
           .select(:id, "ts_rank_cd(#{fqc_quoted}, #{tsquery}) AS rank")
           .where("#{fqc_quoted} @@ #{tsquery}")
       end
