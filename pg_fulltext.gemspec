@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name        = 'pg_fulltext'
-  spec.version     = '1.0.1'
+  spec.version     = '1.1.0'
   spec.summary     = 'PostgreSQL fulltext search'
   spec.description = 'Allows simple searching with a variety of options'
   spec.authors     = ['Adam Robertson']
