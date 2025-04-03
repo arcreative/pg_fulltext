@@ -26,7 +26,7 @@ module PgFulltext
         ignore_accents: false
       )
         serial = SecureRandom.hex(4)
-        pk_quoted = "#{quoted_table_name}.#{connection.quote_column_name(primary_key)}"
+        quoted_primary_key = connection.quote_column_name(primary_key)
         fulltext_join_name = "pg_fulltext_#{serial}"
 
         # Build the search relation to join on
@@ -40,7 +40,7 @@ module PgFulltext
         )
 
         # Join the search relation
-        relation = relation.joins("INNER JOIN (#{search_relation.to_sql}) AS #{fulltext_join_name} ON #{fulltext_join_name}.id = #{pk_quoted}")
+        relation = relation.joins("INNER JOIN (#{search_relation.to_sql}) AS #{fulltext_join_name} ON #{fulltext_join_name}.#{quoted_primary_key} = #{quoted_table_name}.#{quoted_primary_key}")
 
         # Order/reorder against the search rank
         if order || reorder
@@ -67,7 +67,7 @@ module PgFulltext
         tsquery = "regexp_replace(#{tsquery}::text, '''([a-z0-9\\-_@.]+)''', '''\\1'':*', 'g')::tsquery" if prefix
         relation
           .unscoped
-          .select(:id, "ts_rank_cd(#{fqc_quoted}, #{tsquery}) AS rank")
+          .select(primary_key, "ts_rank_cd(#{fqc_quoted}, #{tsquery}) AS rank")
           .where("#{fqc_quoted} @@ #{tsquery}")
       end
     end
